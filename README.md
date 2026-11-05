@@ -4,4 +4,4 @@ discord_users:
   - Rushamon (@roysdon)
   - TheFarmerJosh
   - wren (@lvlwon)
-  - honeybadgermd
+  - honeybadgermd (@rhettoric)
