@@ -155,6 +155,9 @@ public class Interact : MonoBehaviour
 
             if (distanceToSoundReceiver < clearDistance)
             {
+                GameObject safeDoor = GameObject.FindWithTag("Safe");
+                Destroy(safeDoor);
+                Destroy(heldWaveform);
                 Destroy(soundReceiver);
             }
         }
