@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5433176845677245616}
   - component: {fileID: 8030411424964361369}
   m_Layer: 0
-  m_Name: Cow Pic
+  m_Name: Dog Pic
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -67,7 +67,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b5c9273bb78573741a30e782ef8e29de, type: 2}
+  - {fileID: 2100000, guid: a077c1fe0f3f64340ac63132f058fd01, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -106,7 +106,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3

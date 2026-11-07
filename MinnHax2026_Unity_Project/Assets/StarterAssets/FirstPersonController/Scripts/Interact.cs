@@ -21,14 +21,18 @@ public class Interact : MonoBehaviour
     public AudioSource playerAudioSource;
     private AudioClip playerSoundClip;
     private GameObject heldWaveform;
-    public GameObject cowPicTest;
+    public GameObject dogPicTest;
+
+    [Header("Sound Puzzle Progress")]
+    [SerializeField] private float distanceToSoundReceiver;
+    [SerializeField] private GameObject soundReceiver;
+    public float clearDistance = 1.5f;
 
     void Update()
     {
 
         if (pickupActionReference.action.triggered)
         {
-
             if (heldObj == null)
             {
                 RaycastHit hit;
@@ -45,7 +49,6 @@ public class Interact : MonoBehaviour
 
         if (takeSoundActionReference.action.triggered)
         {
-
             RaycastHit hit;
             if (Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.CompareTag("Sound"))
             {
@@ -55,9 +58,15 @@ public class Interact : MonoBehaviour
 
         if (playSoundActionReference.action.triggered)
         {
-
             PlaySound();
         }
+
+        if (heldWaveform != null)
+        {
+            AdjustPic();
+            distanceToSoundReceiver = Vector3.Distance(holdArea2.transform.position, soundReceiver.transform.position);
+            //Debug.Log($"distance to target: {distanceToSoundReceiver}");
+        } 
     }
 
     void FixedUpdate()
@@ -66,11 +75,6 @@ public class Interact : MonoBehaviour
         if (heldObj != null)
         {
             AdjustItem();
-        } 
-
-        if (heldWaveform != null)
-        {
-            AdjustPic();
         } 
     }
 
@@ -85,7 +89,6 @@ public class Interact : MonoBehaviour
             //heldObjRB.linearVelocity = moveDirection * move;
             //heldObjRB.linearVelocity = moveDirection / Mathf.Max((moveDirection.magnitude / move), Time.fixedDeltaTime);
             //heldObjRB.MovePosition(holdArea.position);
-            Debug.Log($"linear velocity: {heldObjRB.linearVelocity}");
             Vector3 adjustForce = (moveDirection * move) - (heldObjRB.linearVelocity * damp);
             heldObjRB.AddForce(adjustForce, ForceMode.Force);
              
@@ -131,12 +134,15 @@ public class Interact : MonoBehaviour
             Destroy(heldWaveform);
         }
 
-        if (newSound.name == "Cow")
+        if (newSound.name == "Dog")
         {
-            heldWaveform = Instantiate(cowPicTest, holdArea2.position, holdArea2.rotation);
+            heldWaveform = Instantiate(dogPicTest, holdArea2.position, holdArea2.rotation);
             AudioSource targetAudioSource = newSound.GetComponent<AudioSource>();
             AudioClip targetAudioClip = targetAudioSource.clip;
+            targetAudioSource.mute = true;
             playerSoundClip = targetAudioClip;
+            soundReceiver = GameObject.Find("Cow");
+
         }
     }
 
@@ -145,10 +151,12 @@ public class Interact : MonoBehaviour
 
         if (playerSoundClip != null && !playerAudioSource.isPlaying)
         {
-            Debug.Log("Mooooo");
             playerAudioSource.PlayOneShot(playerSoundClip, 1.0f);
-            //create sphere collider around player
-            //target will check for collision + check for the audioclip attached to hold area 2's audiosource
+
+            if (distanceToSoundReceiver < clearDistance)
+            {
+                Destroy(soundReceiver);
+            }
         }
     }
 }
