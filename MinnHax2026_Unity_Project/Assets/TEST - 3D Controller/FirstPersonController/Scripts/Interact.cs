@@ -153,7 +153,8 @@ public class Interact : MonoBehaviour
         {
             playerAudioSource.PlayOneShot(playerSoundClip, 1.0f);
 
-            if (distanceToSoundReceiver < clearDistance)
+            //RaycastHit hit;
+            if (distanceToSoundReceiver < clearDistance /*&& Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.CompareTag("Sound")*/)
             {
                 GameObject safeDoor = GameObject.FindWithTag("Safe");
                 Destroy(safeDoor);
