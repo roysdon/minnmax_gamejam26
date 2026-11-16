@@ -21,7 +21,6 @@ public class Interact : MonoBehaviour
     public AudioSource playerAudioSource;
     private AudioClip playerSoundClip;
     private GameObject heldWaveform;
-    public GameObject dogPicTest;
 
     [Header("Sound Puzzle Progress")]
     [SerializeField] private float distanceToSoundReceiver;
@@ -50,9 +49,9 @@ public class Interact : MonoBehaviour
         if (takeSoundActionReference.action.triggered)
         {
             RaycastHit hit;
-            if (Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.CompareTag("Sound"))
+            if (Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.TryGetComponent(out SoundSource source))
             {
-                TakeSound(hit.transform.gameObject);
+                TakeSound(source);
             }
         }
 
@@ -127,7 +126,7 @@ public class Interact : MonoBehaviour
         heldWaveform.transform.SetParent(holdArea2.transform);
     }
 
-    void TakeSound(GameObject newSound)
+    void TakeSound(SoundSource newSound)
     {
         if (heldWaveform != null)
         {
@@ -136,11 +135,9 @@ public class Interact : MonoBehaviour
 
         if (newSound.name == "Dog")
         {
-            heldWaveform = Instantiate(dogPicTest, holdArea2.position, holdArea2.rotation);
-            AudioSource targetAudioSource = newSound.GetComponent<AudioSource>();
-            AudioClip targetAudioClip = targetAudioSource.clip;
-            targetAudioSource.mute = true;
-            playerSoundClip = targetAudioClip;
+            heldWaveform = Instantiate(newSound.HeldSoundGraphic, holdArea2.position, holdArea2.rotation);
+            playerSoundClip = newSound.Clip;
+            newSound.Capture();
             soundReceiver = GameObject.Find("Cow");
 
         }
