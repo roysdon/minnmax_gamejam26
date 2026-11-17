@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -18,16 +19,23 @@ public class Interact : MonoBehaviour
     [Header("Interact w/ Sound")]
     public InputActionReference takeSoundActionReference;
     public InputActionReference playSoundActionReference;
+    public InputActionReference nextSoundActionReference;
     public Transform holdArea2;
     public AudioSource playerAudioSource;
     [SerializeField] private List<AudioClip> recordedSounds = new List<AudioClip>();
     [SerializeField] private int selectedSoundIndex = -1;
     private GameObject heldWaveform;
+    [SerializeField] private TMP_Text soundListText = null;
 
     private AudioClip SelectedSound => selectedSoundIndex >= 0 ? recordedSounds[selectedSoundIndex] : null;
 
     [Header("Sound Puzzle Progress")]
     public float clearDistance = 1.5f;
+
+    void Start()
+    {
+        UpdateSoundListText();
+    }
 
     void Update()
     {
@@ -60,6 +68,11 @@ public class Interact : MonoBehaviour
         if (playSoundActionReference.action.triggered)
         {
             PlaySound();
+        }
+
+        if (nextSoundActionReference.action.triggered)
+        {
+            CycleSound(true);
         }
 
         if (heldWaveform != null)
@@ -128,6 +141,12 @@ public class Interact : MonoBehaviour
 
     void TakeSound(SoundSource newSound)
     {
+        if (newSound.Clip == null)
+        {
+            Debug.LogWarning(newSound.name + " has a SoundSource but its AudioSource has no clip", newSound);
+            return;
+        }
+
         if (heldWaveform != null)
         {
             Destroy(heldWaveform);
@@ -143,8 +162,55 @@ public class Interact : MonoBehaviour
             recordedSounds.Add(newSound.Clip);
         }
 
-        selectedSoundIndex = recordedSounds.IndexOf(newSound.Clip);
+        SelectSound(recordedSounds.IndexOf(newSound.Clip));
         newSound.Capture();
+    }
+
+    void CycleSound(bool forward)
+    {
+        if (recordedSounds.Count == 0)
+        {
+            return;
+        }
+
+        int step = forward ? 1 : -1;
+        SelectSound((selectedSoundIndex + step + recordedSounds.Count) % recordedSounds.Count);
+    }
+
+    void SelectSound(int index)
+    {
+        if (index < 0 || index >= recordedSounds.Count)
+        {
+            return;
+        }
+
+        selectedSoundIndex = index;
+        UpdateSoundListText();
+    }
+
+    void UpdateSoundListText()
+    {
+        if (soundListText == null)
+        {
+            return;
+        }
+
+        string text = "";
+        for (int i = 0; i < recordedSounds.Count; i++)
+        {
+            string soundName = recordedSounds[i] != null ? recordedSounds[i].name : "<missing sound>";
+
+            if (i == selectedSoundIndex)
+            {
+                text += "<b>> " + soundName + "</b>\n";
+            }
+            else
+            {
+                text += soundName + "\n";
+            }
+        }
+
+        soundListText.text = text;
     }
 
     void PlaySound()
