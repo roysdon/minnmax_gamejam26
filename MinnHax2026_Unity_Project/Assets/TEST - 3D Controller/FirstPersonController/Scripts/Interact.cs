@@ -133,14 +133,10 @@ public class Interact : MonoBehaviour
             Destroy(heldWaveform);
         }
 
-        if (newSound.name == "Dog")
-        {
-            heldWaveform = Instantiate(newSound.HeldSoundGraphic, holdArea2.position, holdArea2.rotation);
-            playerSoundClip = newSound.Clip;
-            newSound.Capture();
-            soundReceiver = GameObject.Find("Cow");
-
-        }
+        heldWaveform = Instantiate(newSound.HeldSoundGraphic, holdArea2.position, holdArea2.rotation);
+        playerSoundClip = newSound.Clip;
+        newSound.Capture();
+        soundReceiver = FindAnyObjectByType<SoundReceiver>().gameObject;
     }
 
     void PlaySound()
@@ -151,12 +147,12 @@ public class Interact : MonoBehaviour
             playerAudioSource.PlayOneShot(playerSoundClip, 1.0f);
 
             //RaycastHit hit;
-            if (distanceToSoundReceiver < clearDistance /*&& Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.CompareTag("Sound")*/)
+            if (distanceToSoundReceiver < clearDistance
+                && soundReceiver != null
+                && soundReceiver.GetComponent<SoundReceiver>().Accepts(playerSoundClip) /*&& Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.CompareTag("Sound")*/)
             {
-                GameObject safeDoor = GameObject.FindWithTag("Safe");
-                Destroy(safeDoor);
+                soundReceiver.GetComponent<SoundReceiver>().Solve();
                 Destroy(heldWaveform);
-                Destroy(soundReceiver);
             }
         }
     }
