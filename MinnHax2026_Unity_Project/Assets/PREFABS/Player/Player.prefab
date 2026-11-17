@@ -194,7 +194,7 @@ GameObject:
   - component: {fileID: 5843094200724918602}
   - component: {fileID: 3677348068663457524}
   m_Layer: 8
-  m_Name: Test Player Controller
+  m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
