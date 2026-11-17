@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -19,12 +20,13 @@ public class Interact : MonoBehaviour
     public InputActionReference playSoundActionReference;
     public Transform holdArea2;
     public AudioSource playerAudioSource;
-    private AudioClip playerSoundClip;
+    [SerializeField] private List<AudioClip> recordedSounds = new List<AudioClip>();
+    [SerializeField] private int selectedSoundIndex = -1;
     private GameObject heldWaveform;
 
+    private AudioClip SelectedSound => selectedSoundIndex >= 0 ? recordedSounds[selectedSoundIndex] : null;
+
     [Header("Sound Puzzle Progress")]
-    [SerializeField] private float distanceToSoundReceiver;
-    [SerializeField] private GameObject soundReceiver;
     public float clearDistance = 1.5f;
 
     void Update()
@@ -49,7 +51,7 @@ public class Interact : MonoBehaviour
         if (takeSoundActionReference.action.triggered)
         {
             RaycastHit hit;
-            if (Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.TryGetComponent(out SoundSource source))
+            if (Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.TryGetComponent(out SoundSource source) && source.IsActive)
             {
                 TakeSound(source);
             }
@@ -63,9 +65,7 @@ public class Interact : MonoBehaviour
         if (heldWaveform != null)
         {
             AdjustPic();
-            distanceToSoundReceiver = Vector3.Distance(holdArea2.transform.position, soundReceiver.transform.position);
-            //Debug.Log($"distance to target: {distanceToSoundReceiver}");
-        } 
+        }
     }
 
     void FixedUpdate()
@@ -133,27 +133,48 @@ public class Interact : MonoBehaviour
             Destroy(heldWaveform);
         }
 
-        heldWaveform = Instantiate(newSound.HeldSoundGraphic, holdArea2.position, holdArea2.rotation);
-        playerSoundClip = newSound.Clip;
+        if (newSound.HeldSoundGraphic != null)
+        {
+            heldWaveform = Instantiate(newSound.HeldSoundGraphic, holdArea2.position, holdArea2.rotation);
+        }
+
+        if (!recordedSounds.Contains(newSound.Clip))
+        {
+            recordedSounds.Add(newSound.Clip);
+        }
+
+        selectedSoundIndex = recordedSounds.IndexOf(newSound.Clip);
         newSound.Capture();
-        soundReceiver = FindAnyObjectByType<SoundReceiver>().gameObject;
     }
 
     void PlaySound()
     {
 
-        if (playerSoundClip != null && !playerAudioSource.isPlaying)
+        if (SelectedSound != null && !playerAudioSource.isPlaying)
         {
-            playerAudioSource.PlayOneShot(playerSoundClip, 1.0f);
+            playerAudioSource.PlayOneShot(SelectedSound, 1.0f);
 
             //RaycastHit hit;
-            if (distanceToSoundReceiver < clearDistance
-                && soundReceiver != null
-                && soundReceiver.GetComponent<SoundReceiver>().Accepts(playerSoundClip) /*&& Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.CompareTag("Sound")*/)
+            // && Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.CompareTag("Sound")
+            SoundReceiver receiver = FindReceiverInRange(SelectedSound);
+            if (receiver != null)
             {
-                soundReceiver.GetComponent<SoundReceiver>().Solve();
+                receiver.Solve();
                 Destroy(heldWaveform);
             }
         }
+    }
+
+    SoundReceiver FindReceiverInRange(AudioClip clip)
+    {
+        foreach (Collider nearby in Physics.OverlapSphere(holdArea2.position, clearDistance))
+        {
+            SoundReceiver receiver = nearby.GetComponentInParent<SoundReceiver>();
+            if (receiver != null && receiver.Accepts(clip))
+            {
+                return receiver;
+            }
+        }
+        return null;
     }
 }

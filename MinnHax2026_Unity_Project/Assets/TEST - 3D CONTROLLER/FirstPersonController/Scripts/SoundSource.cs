@@ -8,12 +8,35 @@ public class SoundSource : MonoBehaviour
 
     public CaptureMode mode = CaptureMode.Take;
 
+    [SerializeField] private bool isActive = true;
+
+    public bool IsActive => isActive;
+
     // Visual representation of a held sound
     [SerializeField] private GameObject heldSoundGraphic = null;
 
     public GameObject HeldSoundGraphic => heldSoundGraphic;
 
     public AudioClip Clip => GetComponent<AudioSource>().clip;
+
+    void Start()
+    {
+        if (!isActive)
+        {
+            GetComponent<AudioSource>().Stop();
+        }
+    }
+
+    public void Activate()
+    {
+        if (isActive)
+        {
+            return;
+        }
+
+        isActive = true;
+        GetComponent<AudioSource>().Play();
+    }
 
     public void Capture()
     {
