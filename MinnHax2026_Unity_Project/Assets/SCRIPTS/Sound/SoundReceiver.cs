@@ -3,9 +3,9 @@ using UnityEngine.Events;
 
 public class SoundReceiver : MonoBehaviour
 {
-    [SerializeField] private AudioClip requiredSound = null;
+    public AudioClip requiredSound = null;
 
-    [SerializeField] private UnityEvent onSolved = new UnityEvent();
+    public UnityEvent onSolved = new UnityEvent();
 
     private bool isSolved;
 

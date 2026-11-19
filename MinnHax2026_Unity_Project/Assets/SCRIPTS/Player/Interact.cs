@@ -27,6 +27,13 @@ public class Interact : MonoBehaviour
     private GameObject heldWaveform;
     [SerializeField] private TMP_Text soundListText = null;
 
+    // Message shown on HUD for a set duration
+    public TMP_Text messageText = null;
+    private float messageHideTime;
+
+    // Object interaction prompt text
+    public TMP_Text promptText = null;
+
     private AudioClip SelectedSound => selectedSoundIndex >= 0 ? recordedSounds[selectedSoundIndex] : null;
 
     [Header("Sound Puzzle Progress")]
@@ -39,10 +46,16 @@ public class Interact : MonoBehaviour
 
     void Update()
     {
+        Interactable lookedAt = FindTargetInteractable();
+        UpdatePromptText(lookedAt);
 
         if (pickupActionReference.action.triggered)
         {
-            if (heldObj == null)
+            if (heldObj == null && lookedAt != null)
+            {
+                lookedAt.Use(this);
+            }
+            else if (heldObj == null)
             {
                 RaycastHit hit;
                 if (Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.CompareTag("Pickup"))
@@ -59,9 +72,16 @@ public class Interact : MonoBehaviour
         if (takeSoundActionReference.action.triggered)
         {
             RaycastHit hit;
-            if (Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.TryGetComponent(out SoundSource source) && source.IsActive)
+            if (Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.TryGetComponent(out SoundSource source))
             {
-                TakeSound(source);
+                if (source.IsBlocked)
+                {
+                    ShowMessage("Sound is blocked", 2.0f);
+                }
+                else if (source.CanBeCaptured)
+                {
+                    TakeSound(source);
+                }
             }
         }
 
@@ -78,6 +98,35 @@ public class Interact : MonoBehaviour
         if (heldWaveform != null)
         {
             AdjustPic();
+        }
+
+        if (messageText != null && Time.time >= messageHideTime)
+        {
+            messageText.text = "";
+        }
+    }
+
+    Interactable FindTargetInteractable()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(CinemachineCameraTarget.transform.position, CinemachineCameraTarget.transform.forward, out hit, pickupRange))
+        {
+            return hit.transform.GetComponentInParent<Interactable>();
+        }
+        return null;
+    }
+
+    void UpdatePromptText(Interactable lookedAt)
+    {
+        if (promptText == null)
+        {
+            return;
+        }
+
+        string prompt = lookedAt != null ? lookedAt.prompt : "";
+        if (promptText.text != prompt)
+        {
+            promptText.text = prompt;
         }
     }
 
@@ -119,6 +168,11 @@ public class Interact : MonoBehaviour
             //heldObjRB.constraints = RigidbodyConstraints.FreezeRotation;
             heldObjRB.transform.parent = holdArea;
             heldObj = pickObj;
+
+            if (heldObj.TryGetComponent(out Pickupable pickupable))
+            {
+                pickupable.PickedUp();
+            }
         }
     }   
 
@@ -130,6 +184,12 @@ public class Interact : MonoBehaviour
         //heldObjRB.angularDamping = 0.05f; 
         //heldObjRB.constraints = RigidbodyConstraints.None;
         heldObjRB.transform.parent = null;
+
+        if (heldObj.TryGetComponent(out Pickupable pickupable))
+        {
+            pickupable.Dropped();
+        }
+
         heldObj = null;
     }
 
@@ -152,9 +212,9 @@ public class Interact : MonoBehaviour
             Destroy(heldWaveform);
         }
 
-        if (newSound.HeldSoundGraphic != null)
+        if (newSound.heldSoundGraphic != null)
         {
-            heldWaveform = Instantiate(newSound.HeldSoundGraphic, holdArea2.position, holdArea2.rotation);
+            heldWaveform = Instantiate(newSound.heldSoundGraphic, holdArea2.position, holdArea2.rotation);
         }
 
         if (!recordedSounds.Contains(newSound.Clip))
@@ -213,12 +273,26 @@ public class Interact : MonoBehaviour
         soundListText.text = text;
     }
 
+    void ShowMessage(string message, float duration)
+    {
+        if (messageText == null)
+        {
+            Debug.Log(message);
+            return;
+        }
+
+        messageText.text = message;
+        messageHideTime = Time.time + duration;
+    }
+
     void PlaySound()
     {
 
-        if (SelectedSound != null && !playerAudioSource.isPlaying)
+        if (SelectedSound != null)
         {
-            playerAudioSource.PlayOneShot(SelectedSound, 1.0f);
+            playerAudioSource.Stop();
+            playerAudioSource.clip = SelectedSound;
+            playerAudioSource.Play();
 
             //RaycastHit hit;
             // && Physics.Raycast(CinemachineCameraTarget.transform.position,CinemachineCameraTarget.transform.forward, out hit, pickupRange) && hit.transform.CompareTag("Sound")
