@@ -8,6 +8,7 @@ TagManager:
   - Pickup
   - Sound
   - Safe
+  - Wall
   layers:
   - Default
   - TransparentFX
@@ -19,7 +20,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - Wall
   - 
   - 
   - 
